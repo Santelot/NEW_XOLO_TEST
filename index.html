@@ -322,6 +322,51 @@
             },
         };
 
+        const YouTubeExtension = {
+            name: 'YouTube',
+            type: 'response',
+            match: ({ trace }) => trace.type === 'ext_youtube' || trace.payload?.name === 'ext_youtube',
+            render: ({ trace, element }) => {
+                const { videoID, autoplay, width, height } = trace.payload;
+                
+                // Extraer videoID si se pasó una URL completa
+                let id = videoID;
+                if (videoID && videoID.includes('youtube.com')) {
+                    const url = new URL(videoID);
+                    id = url.searchParams.get('v') || videoID;
+                } else if (videoID && videoID.includes('youtu.be')) {
+                    id = videoID.split('/').pop().split('?')[0];
+                }
+                
+                const container = document.createElement('div');
+                container.innerHTML = `
+                    <style>
+                        .vf-youtube-container {
+                            position: relative;
+                            width: 100%;
+                            max-width: ${width || 280}px;
+                            border-radius: 12px;
+                            overflow: hidden;
+                            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                        }
+                        .vf-youtube-container iframe {
+                            width: 100%;
+                            height: ${height || 158}px;
+                            border: none;
+                        }
+                    </style>
+                    <div class="vf-youtube-container">
+                        <iframe 
+                            src="https://www.youtube.com/embed/${id}?${autoplay ? 'autoplay=1&' : ''}rel=0&modestbranding=1"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                        </iframe>
+                    </div>
+                `;
+                element.appendChild(container);
+            },
+        };
+
         const TimerExtension = {
             name: 'Timer',
             type: 'response',
@@ -609,6 +654,7 @@
                     extensions: [
                         DisableInputExtension,
                         VideoExtension,
+                        YouTubeExtension,
                         TimerExtension,
                         FormExtension,
                         MapExtension,
